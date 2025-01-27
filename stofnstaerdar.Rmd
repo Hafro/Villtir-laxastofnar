@@ -1,0 +1,284 @@
+---
+title: "Stofnstærðir. Dreifing og minni"
+author: "Jóhannes Guðbrandsson"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, out.width = "100%", warning = FALSE, message = FALSE)
+```
+
+# Markmið / Spurningar
+
+1. Hvaða dreifing lýsir stofnstærðarsveiflum hjá laxi best?
+2. Hvernig er best að meta stika fyrir þá dreifingu? Er t.d. sama dreifni óháð ám?
+3. Er þetta minnislaus prósess eða þarf að taka tillit til seinustu ára við spár á stofnstærð?
+
+# Fisktalning
+## Gögn
+```{r}
+library(tidyverse)
+library(modelr)
+library(zoo)
+library(patchwork)
+library(mar)
+
+mar <- connect_mar()
+default_theme <- theme_set(theme_bw())
+
+gogn <- read_delim("teljaragogn.csv") |>
+  na.omit() |>
+  filter(!vatnsfall %in% c("Selá","Laugardalsá")) |>
+  #filter(!(ar < 1992 & vatnsfall=="Blanda")) |>
+  mutate(ln = log(fjoldi)) |>
+  group_by(vatnsfall) |>
+  mutate( m5 = lag(rollmean(ln, 5,fill=NA, align = "right"))) |>
+  ungroup()
+```
+
+```{r out.width="100%"}
+gogn |>
+  ggplot(aes(ar, fjoldi, col=vatnsfall)) +
+  geom_point() +
+  geom_path() +
+  facet_wrap(~vatnsfall, scales = "free") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) 
+```
+
+```{r out.width="100%"}
+gogn |>
+  ggplot(aes(ar, fjoldi, col=vatnsfall)) +
+  geom_point() +
+  geom_path() +
+  facet_wrap(~vatnsfall, scales = "free") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  scale_y_log10()
+```
+
+```{r}
+gogn |>
+  group_by(vatnsfall) |>
+  summarise(start=min(ar), stop=max(ar), fjoldi_ara=n(), medal_fjoldi=mean(fjoldi), log_m_trans=exp(mean(ln)), log_medal= mean(ln), stadalfravik= sd(fjoldi), log_stadal=sd(ln)) |>
+  arrange(medal_fjoldi) |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r}
+gogn |>
+  group_by(vatnsfall) |>
+  summarise(start=min(ar), stop=max(ar), fjoldi_ara=n(), medal_fjoldi=mean(fjoldi), log_m_trans=exp(mean(ln)), log_medal= mean(ln), stadalfravik= sd(fjoldi), log_stadal=sd(ln)) |>
+  ggplot(aes(log_medal, log_stadal))+
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+# Fisktalning - Dreifing
+```{r}
+mNorm <- lm(fjoldi~vatnsfall, data=gogn) #Meðaltöl í fjölda
+mLNorm <- lm(ln~vatnsfall, data=gogn) #Meðaltöl á log
+mLag <- lm(ln~vatnsfall + m5, data=gogn)
+mLag2 <- lm(ln~vatnsfall + vatnsfall*m5, data=gogn)
+
+gogn |>
+  spread_residuals(mNorm,mLNorm, mLag, mLag2) ->
+  gogn
+```
+## Normaldreifing
+```{r}
+plot(mNorm)
+```
+
+```{r}
+shapiro.test(gogn$mNorm)
+```
+
+## Log-normal
+```{r}
+plot(mLNorm)
+```
+```{r}
+shapiro.test(gogn$mLNorm)
+```
+
+# Fisktalning - Minni
+```{r}
+mLNorm <- lm(ln~vatnsfall, data=na.omit(gogn))
+anova(mLNorm, mLag)
+anova(mLag, mLag2)
+```
+
+## Autocorrelation án lags
+```{r}
+for (v in unique(gogn$vatnsfall)){
+  acf(gogn$mLNorm[gogn$vatnsfall==v], main=v)
+  pacf(gogn$mLNorm[gogn$vatnsfall==v], main=v)
+}
+```
+
+## Autocorrelation með laggi
+```{r}
+for (v in unique(gogn$vatnsfall)){
+  acf(na.omit(gogn$mLag[gogn$vatnsfall==v]), main=v)
+  pacf(na.omit(gogn$mLag[gogn$vatnsfall==v]), main=v)
+}
+```
+
+## Staðalfrávik
+```{r}
+summary(mLNorm)$sigma
+summary(mLag)$sigma
+```
+
+# Veiðigögn
+## Gögn
+```{r}
+listi <- c("Andakílsá"=12,"Blanda"=158,"Elliðaár"=411,"Norðurá"=1861, "Krossá"=1462,
+           "Langá"=1568,"Miðfjarðará"=1733, "Hítará"=956,"Sog"=2271,"Stóra-Laxá"=2339,
+           "Ásgarðslækur"=284,"Kúðafljót"=1485,"Héraðsvötn"=955,
+           "LaxáLeir" = 1589,"LaxáAðal"=1591,"Þverá"=2870,"LaxáKjós"=1590, "Álftá"=69,
+           "Fnjóská"=537,"Grímsá"=749,"Haffjarðará"=835,
+           "Hafralónsá"=851,"Haukadalsa"=883,"Hofsa"=996,"Laugardalsa"=1579,
+           "Svalbarðsa"=2424, "Brynjudalsá"=257,"FáskrúðDölum"=465,"Hrútafjarðará" =1106,
+           "HölknáÞist"=1216, "LaxáDölum"=1600,"Leirvogsá"=1615, "SeláVopn"=2080,
+           "StaðaráSt"=2282)
+veidibok_veidibok(mar) |> 
+  left_join(tbl_mar(mar,"ops$johannes.VEIDIBOK_TO_WATER"), by=c("vatnsfall_id"="id")) |>
+  left_join({fv_vatn(mar) |>
+      select(vatn_nr, adalvatnsfall_nr, vatnsfall_til_nr)}, by=c("water_no"="vatn_nr")) |>
+  left_join({fv_vatn(mar) |> 
+      select(vatn_nafn, vatn_nr) |> 
+      rename(adalvatnsfall = vatn_nafn)}, by= c("adalvatnsfall_nr"="vatn_nr")) |>
+  filter(fisktegund_id == 91, ar <2023, ar > 1973) |>
+  filter(adalvatnsfall_nr %in% listi |
+           water_no %in% listi) |>
+  filter(!(water_no==1568 & ar %in% 1989:1990),
+         !(adalvatnsfall_nr==996 & ar==2008),
+         vatnsfall!="Blöndulón") |>
+  #replace_na(list(sleppt_kodi=0)) |>
+  group_by(adalvatnsfall_nr) |>
+  collect(n=Inf) |>
+  mutate(vatnsfall= str_flatten(sort(unique(vatnsfall)), collapse = " ")) |> 
+  ungroup() |>
+  count(vatnsfall, adalvatnsfall_nr, ar) |> 
+  mutate(ln=log(n)) |>
+  arrange(adalvatnsfall_nr, ar) |>
+  group_by(adalvatnsfall_nr) |>
+  collect(n=Inf) |>
+  mutate( mInf = mean(ln,na.rm = T),
+          m5 = lag(rollmean(ln, 5,fill=NA, align = "right")),
+          m10 = lag(rollmean(ln, 10,fill=NA, align = "right"))) |>
+  ungroup() ->
+  test
+```
+
+```{r}
+test |>
+  ggplot(aes(ar,n, col=vatnsfall)) +
+  geom_path() +
+  #geom_point() +
+  #geom_path(aes(y=m5), linetype = 2) +
+  #geom_path(aes(y=m10), linetype = 3) +
+  facet_wrap(~vatnsfall, scales="free_y") +
+  theme(legend.position = "none")
+```
+
+```{r}
+test |>
+  ggplot(aes(ar,n, col=vatnsfall)) +
+  geom_path() +
+  #geom_point() +
+  #geom_path(aes(y=m5), linetype = 2) +
+  #geom_path(aes(y=m10), linetype = 3) +
+  facet_wrap(~vatnsfall, scales="free_y") +
+  theme(legend.position = "none") +
+  scale_y_log10()
+```
+
+```{r}
+test |>
+  group_by(vatnsfall) |>
+  summarise(start=min(ar), stop=max(ar), fjoldi_ara=n(), medal_fjoldi=mean(n), log_m_trans=exp(mean(ln)), log_medal= mean(ln), stadalfravik= sd(n), log_stadal=sd(ln)) |>
+  arrange(medal_fjoldi) |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r}
+test |>
+  group_by(vatnsfall) |>
+  summarise(start=min(ar), stop=max(ar), fjoldi_ara=n(), medal_fjoldi=mean(n), log_m_trans=exp(mean(ln)), log_medal= mean(ln), stadalfravik= sd(n), log_stadal=sd(ln)) |>
+  ggplot(aes(log_medal, log_stadal))+
+  geom_point() +
+  geom_smooth(method = "lm",se=FALSE) +
+  geom_smooth(col="black", se=FALSE)
+```
+
+# Veiðigögn - dreifing
+Sleppum því að tjekka á normaldreifingu.
+
+## log-normal
+```{r}
+#Líkön
+mL <- lm(ln~vatnsfall, (test))
+mLm5 <- lm(ln~vatnsfall + m5, data = (test))
+mLm10 <- lm(ln~vatnsfall + m10, data = test)
+mLNA <- lm(ln~vatnsfall, na.omit(test))
+mLm5NA <- lm(ln~vatnsfall + m5, data = na.omit(test))
+mLm5m10 <- lm(ln~vatnsfall + m5+m10, data = test)
+mL0m5 <- lm(ln~m5, data = na.omit(test))
+mL0m5m10 <- lm(ln~m5 + m10, data = na.omit(test))
+mL0m10 <- lm(ln~m10, data = na.omit(test))
+mLm5NAspec <- lm(ln~vatnsfall + vatnsfall*m5, data = na.omit(test))
+
+test |>
+  spread_residuals(mL, mLm5,mLm10,mLm5m10) ->
+  test
+```
+
+```{r}
+plot(mL)
+```
+
+```{r}
+shapiro.test(test$mL)
+```
+
+Feitir halar, veiðihlutfall og léleg skráning?
+
+# Veiðigögn lagg
+```{r}
+drop1(mLm5m10, test="F")
+drop1(mLm5NAspec, test = "F")
+```
+
+5 ára meðaltal með mest áhrif
+
+## Staðalfrávik
+```{r}
+summary(mLm5m10)$sigma
+summary(mLm5)$sigma
+summary(mL)$sigma
+```
+
+## Autocorrelation 5 ára lag
+```{r}
+for (v in unique(test$vatnsfall)){
+  #acf(na.omit(test$m2[test$vatnsfall==v]), main=v)
+  pacf(na.omit(test$mLm5[test$vatnsfall==v]), main=v)
+}
+```
+
+# Niðurstaða
+1. Log-normal dreifing virðist lýsa stofnsveiflum ágætlega. Hugsanlega ætti talningadreifing eins og Poisson dreifing eða skyldar dreifingar betur við minnstu stofnanna.
+2. Best að reikna meðaltal á log-skala og staðalfrávik virðist svipað milli áa. Miðað við veiðigögn er hugsanlega hærra staðalfráviki í minni ánum en ekki er hægt að útiloka að "mæliskekkja" spili þar stórt hlutverk. Það er ótryggari skráning og / eða annað mynstur í veiðihlutfalli eftir stærð áa.
+3. Meðaltal síðustu fimm ára virðist gefa ágætisspá. Frekar en 10 ára eða heildarmeðaltal. Það er autocorrelation í ám þar sem mikið er af stórlaxi (meikar sens) og einhverja hluta vegna í Elliðaánum. 
