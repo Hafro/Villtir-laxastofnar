@@ -140,7 +140,7 @@ stofnmat |> #151 vatnsföll
   ahaetta#filter(expMedal10< 100) |> ggplot(aes(expMedal10, expMedal, label=adalvatnsfall)) + geom_point() + geom_label_repel() + geom_hline(yintercept = 50) + geom_vline(xintercept = 50) + geom_abline(slope=1, intercept=0)
 
 ahaetta |>  
-  write_excel_csv2("ar2025.csv",na="")
+  write_excel_csv("ar2025.csv",na="")
 
 ahaetta |>
   mutate(ath = ifelse(is.na(nafn),"ny","")) |>
