@@ -1,0 +1,137 @@
+---
+title: "Breytingar - vafaatriði"
+author: "Jóhannes Guðbrandsson"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("veidi.R")
+```
+
+# Ár á mörkunum, yfir 40 í 10ára eða langtíma meðaltali en undir 50 10 ára meðaltal
+## Voru í mati
+* Eldavatn er aðallega sjóbirtingsá en er á mörkunum í fjölda (stofnmat 48.9 laxar síðustu 10 ár)
+* Gljúfurá á mörkunum (44.4 laxar). Hugsanlega áhrif breyttrar nýtingar og lélegra endurheimta úr sjó
+* Ósá / Setbergsá veiðitölum ekki skilað. Bara síðustu ár úr Stóru Langadalsá en ekki Setbergsá
+* Selá er á mörkunum að fóstra lax. Aðallega bleikja. 
+* Selfljót. Silungsveiði?
+* Vatnsholtsá / Vatnasvæði Lýsu. Aðallega silungur. Breytt veiðinýting líka held ég
+
+```{r}
+ahaetta |>
+  filter(expMedal10< 50 & ath!="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 50 & ahaetta$ath!="ny"]) |>
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
+
+## Voru ekki í mati
+
+* Fögruhlíðará. Voru seiðasleppingar en er aðallega sjóbleikja
+* Hoffellsá / Laxá í Nesjum. Voru seiðasleppingar eftir aldamót. Þekki ekki núverandi nýtingu
+* Selá í Álftafirði. Voru seiðasleppingar held ég. Var síðan friðuð og svo aðeins veitt hluta vikunnar. Ólíklegt að veiðihlutfallið sé það sama og í Selá í Vopnafirði.
+
+```{r}
+ahaetta |>
+  filter(expMedal10< 50 & ath=="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 50 & ahaetta$ath=="ny"]) |>
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
+
+# Nýjar ár yfir 50 í 10ára meðaltali
+
+* Seiðasleppingar / hafbeit
+  * Affal, Skógá, Lagarfljót, (Jökla)
+* "Nýjir stofnar" óvíst hvað fiskrækt hefur mikið að segja
+  * Svínafossá, (Jökla)
+  
+```{r}
+ahaetta |>
+  filter(expMedal10 >= 50, ath=="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10 >= 50 & ahaetta$ath=="ny"]) |>
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
+
+# Ár sem detta út. 10 ára og langtímameðaltal undir 40
+```{r}
+ahaetta |>
+  filter(is.na(expMedal10)) |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[is.na(ahaetta$expMedal10)]) |>
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  theme(legend.position = "none")
+```

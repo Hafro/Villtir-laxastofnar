@@ -136,17 +136,17 @@ stofnmat |> #151 vatnsföll
   ungroup() |>
   select(adal_nr, adalvatnsfall,vatnsfall,landsvaedi,landsvaedi_id,vatnsfall_id,M,hraMedal,logMedal,expMedal,M10,hraMedal10,logMedal10,expMedal10,N_ar) |>
   distinct() |> 
-  full_join(read_csv("ar.csv"), by = "adal_nr") ->
-  ahaetta#filter(expMedal10< 100) |> ggplot(aes(expMedal10, expMedal, label=adalvatnsfall)) + geom_point() + geom_label_repel() + geom_hline(yintercept = 50) + geom_vline(xintercept = 50) + geom_abline(slope=1, intercept=0)
-
-ahaetta |>  
-  relocate(vatnsfall_id, vatnsfall, .after = last_col()) |>
-  write_excel_csv("ar2025.csv",na="")
-
-ahaetta |>
+  full_join(read_csv("ar.csv"), by = "adal_nr") |>
   mutate(ath = ifelse(is.na(nafn),"ny","")) |>
   mutate(ath = ifelse(is.na(logMedal10),"ut",ath)) |>
   mutate(nafn = ifelse(is.na(nafn),ATH, nafn)) |>
+  relocate(vatnsfall_id, vatnsfall, .after = last_col()) ->
+  ahaetta#filter(expMedal10< 100) |> ggplot(aes(expMedal10, expMedal, label=adalvatnsfall)) + geom_point() + geom_label_repel() + geom_hline(yintercept = 50) + geom_vline(xintercept = 50) + geom_abline(slope=1, intercept=0)
+
+ahaetta |>  
+  write_excel_csv("ar2025.csv",na="")
+
+ahaetta |>
   select(adal_nr, nafn,V,N,fjarlægð,logMedal10,expMedal10,fjoldi.flokk, ath) |>
   arrange(nafn) |>
   write_excel_csv("ahaetta.csv",na="")
