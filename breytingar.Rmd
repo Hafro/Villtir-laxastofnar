@@ -113,6 +113,8 @@ stofnmat |>
 ```
 
 # Ár sem detta út. 10 ára og langtímameðaltal undir 40
+* Geirlandsá og Tungufljót koma undir Kúðafljót
+
 ```{r}
 ahaetta |>
   filter(is.na(expMedal10)) |>
