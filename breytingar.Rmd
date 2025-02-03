@@ -14,7 +14,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r}
@@ -137,3 +137,41 @@ stofnmat |>
   theme(axis.text.x=element_text(angle=45, hjust=1))+
   theme(legend.position = "none")
 ```
+
+# Ár sem eru ekki með skráningu síðust 10 ár
+```{r out.width="150%"}
+stofnmat |>
+  group_by(adal_nr) |>
+  mutate(ut = max(ar)) |>
+  filter(ut <= 2013) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  theme(legend.position = "none")
+```
+
+# Ár með skráningu síðustu 10 ár en undir 40 fiskar í 10 ára og langtímameðaltali
+```{r out.width="150%"}
+stofnmat |>
+  group_by(adal_nr) |>
+  mutate(ut = max(ar)) |>
+  filter(ut > 2013) |>
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  filter(expMedal<40) |>
+  filter(!(adal_nr %in% ahaetta$adal_nr)) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  theme(legend.position = "none")
+```
+
