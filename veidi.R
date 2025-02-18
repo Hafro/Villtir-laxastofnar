@@ -127,26 +127,32 @@ tbl(mar, sql("select id as fishing_area_id,
   mutate(M=max(stofn), hraMedal=mean(stofn), logMedal=mean(logN), expMedal=exp(logMedal), N_ar=n()) -> #filter(ar>2013) |> filter(!(expMedal10>40 | expMedal>40)) |> View()
   stofnmat
 
-stofnmat |> #151 vatnsföll
-  filter(ar>2013) |> #125 vatnsföll. Þarf að vera skráð veiði minnst einu sinni frá 2014
-  filter(expMedal10>40 | expMedal>40) |> #90 vatnsföll. 10ára meðaltal eða langtímameðaltal yfir 40
-  group_by(adal_nr) |> 
+stofnmat |> #149 vatnsföll
+  #filter(ar>2013) |> #126 vatnsföll. Þarf að vera skráð veiði minnst einu sinni frá 2014
+  #filter(expMedal10>40 | expMedal>40) |> #91 vatnsföll. 10ára meðaltal eða langtímameðaltal yfir 40
+  group_by(adal_nr)  |> 
   mutate(vatnsfall= str_flatten(sort(unique(vatnsfall)), collapse = " "),
          vatnsfall_id= str_flatten(sort(unique(vatnsfall_id)), collapse = " ")) |> 
   ungroup() |>
-  select(adal_nr, adalvatnsfall,vatnsfall,landsvaedi,landsvaedi_id,vatnsfall_id,M,hraMedal,logMedal,expMedal,M10,hraMedal10,logMedal10,expMedal10,N_ar) |>
+  select(last10,adal_nr, adalvatnsfall,vatnsfall,landsvaedi,landsvaedi_id,vatnsfall_id,M,hraMedal,logMedal,expMedal,M10,hraMedal10,logMedal10,expMedal10,N_ar) |>
   distinct() |> 
-  full_join(read_csv("ar.csv"), by = "adal_nr") |>
+  complete(last10, nesting(adal_nr, adalvatnsfall,vatnsfall,landsvaedi,landsvaedi_id,vatnsfall_id,M,hraMedal,logMedal,expMedal,N_ar)) |> 
+  filter(last10) |> 
+  select(-last10) |>
+  full_join(read_csv("ar.csv"), by = "adal_nr") |> 
   mutate(ath = ifelse(is.na(nafn),"ny","")) |>
-  mutate(ath = ifelse(is.na(logMedal10),"ut",ath)) |>
+  mutate(ath = ifelse(!is.na(nafn) & expMedal10 < 40,"ut",ath)) |> 
   mutate(nafn = ifelse(is.na(nafn),ATH, nafn)) |>
+  relocate(N_ar, .before = nafn) |>
   relocate(vatnsfall_id, vatnsfall, .after = last_col()) ->
   ahaetta#filter(expMedal10< 100) |> ggplot(aes(expMedal10, expMedal, label=adalvatnsfall)) + geom_point() + geom_label_repel() + geom_hline(yintercept = 50) + geom_vline(xintercept = 50) + geom_abline(slope=1, intercept=0)
 
 ahaetta |>  
+  #filter(expMedal10 > 40) |> View()
   write_excel_csv("ar2025.csv",na="")
 
 ahaetta |>
+   filter(expMedal10 > 40) |>
   select(adal_nr, nafn,V,N,fjarlægð,logMedal10,expMedal10,fjoldi.flokk, ath) |>
   arrange(nafn) |>
   write_excel_csv("ahaetta.csv",na="")

@@ -36,7 +36,7 @@ mar <- connect_mar()
 default_theme <- theme_set(theme_bw())
 
 gogn <- read_delim("teljaragogn.csv") |>
-  na.omit() |>
+  filter(!is.na(fjoldi)) |>
   filter(!vatnsfall %in% c("Selá","Laugardalsá")) |>
   #filter(!(ar < 1992 & vatnsfall=="Blanda")) |>
   mutate(ln = log(fjoldi)) |>
@@ -112,7 +112,7 @@ shapiro.test(gogn$mLNorm)
 
 # Fisktalning - Minni
 ```{r}
-mLNorm <- lm(ln~vatnsfall, data=na.omit(gogn))
+mLNorm <- lm(ln~vatnsfall, data=filter(gogn,!is.na(m5)))
 anova(mLNorm, mLag)
 anova(mLag, mLag2)
 ```
@@ -120,7 +120,7 @@ anova(mLag, mLag2)
 ## Autocorrelation án lags
 ```{r}
 for (v in unique(gogn$vatnsfall)){
-  acf(gogn$mLNorm[gogn$vatnsfall==v], main=v)
+  #acf(gogn$mLNorm[gogn$vatnsfall==v], main=v)
   pacf(gogn$mLNorm[gogn$vatnsfall==v], main=v)
 }
 ```
@@ -128,7 +128,7 @@ for (v in unique(gogn$vatnsfall)){
 ## Autocorrelation með laggi
 ```{r}
 for (v in unique(gogn$vatnsfall)){
-  acf(na.omit(gogn$mLag[gogn$vatnsfall==v]), main=v)
+  #acf(na.omit(gogn$mLag[gogn$vatnsfall==v]), main=v)
   pacf(na.omit(gogn$mLag[gogn$vatnsfall==v]), main=v)
 }
 ```
@@ -144,7 +144,7 @@ summary(mLag)$sigma
 ```{r}
 listi <- c("Andakílsá"=12,"Blanda"=158,"Elliðaár"=411,"Norðurá"=1861, "Krossá"=1462,
            "Langá"=1568,"Miðfjarðará"=1733, "Hítará"=956,"Sog"=2271,"Stóra-Laxá"=2339,
-           "Ásgarðslækur"=284,"Kúðafljót"=1485,"Héraðsvötn"=955,
+           "Ásgarðslækur"=284,"Skaftá"=2164,"Héraðsvötn"=955,
            "LaxáLeir" = 1589,"LaxáAðal"=1591,"Þverá"=2870,"LaxáKjós"=1590, "Álftá"=69,
            "Fnjóská"=537,"Grímsá"=749,"Haffjarðará"=835,
            "Hafralónsá"=851,"Haukadalsa"=883,"Hofsa"=996,"Laugardalsa"=1579,
@@ -163,7 +163,9 @@ veidibok_veidibok(mar) |>
            water_no %in% listi) |>
   filter(!(water_no==1568 & ar %in% 1989:1990),
          !(adalvatnsfall_nr==996 & ar==2008),
-         vatnsfall!="Blöndulón") |>
+         vatnsfall!="Blöndulón",
+         !(water_no==2574 & ar %in% 2008:2009), #Tungulækur hafbeit
+         water_no!=922) |> #Hellisá flutningur á fiski
   #replace_na(list(sleppt_kodi=0)) |>
   group_by(adalvatnsfall_nr) |>
   collect(n=Inf) |>
@@ -188,7 +190,7 @@ test |>
   #geom_point() +
   #geom_path(aes(y=m5), linetype = 2) +
   #geom_path(aes(y=m10), linetype = 3) +
-  facet_wrap(~vatnsfall, scales="free_y") +
+  facet_wrap(~adalvatnsfall_nr, scales="free_y") +
   theme(legend.position = "none")
 ```
 
@@ -199,16 +201,16 @@ test |>
   #geom_point() +
   #geom_path(aes(y=m5), linetype = 2) +
   #geom_path(aes(y=m10), linetype = 3) +
-  facet_wrap(~vatnsfall, scales="free_y") +
+  facet_wrap(~adalvatnsfall_nr, scales="free_y") +
   theme(legend.position = "none") +
   scale_y_log10()
 ```
 
 ```{r}
 test |>
-  group_by(vatnsfall) |>
+  group_by(adalvatnsfall_nr,vatnsfall) |>
   summarise(start=min(ar), stop=max(ar), fjoldi_ara=n(), medal_fjoldi=mean(n), log_m_trans=exp(mean(ln)), log_medal= mean(ln), stadalfravik= sd(n), log_stadal=sd(ln)) |>
-  arrange(medal_fjoldi) |>
+  #arrange(medal_fjoldi) |>
   kableExtra::kbl(digits = 2) |>
   kableExtra::kable_styling("striped", full_width = F) 
 ```
@@ -251,6 +253,7 @@ plot(mL)
 
 ```{r}
 shapiro.test(test$mL)
+shapiro.test(test$mLm5m10)
 ```
 
 Feitir halar, veiðihlutfall og léleg skráning?

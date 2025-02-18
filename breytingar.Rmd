@@ -21,10 +21,35 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 source("veidi.R")
 ```
 
-# Ár á mörkunum, yfir 40 í 10ára eða langtíma meðaltali en undir 50 10 ára meðaltal
-## Voru í mati
+# Ár á mörkunum, 
+## Voru í mati yfir 40 í 10ára meðaltali en undir 50 10 ára meðaltal
 * Eldavatn er aðallega sjóbirtingsá en er á mörkunum í fjölda (stofnmat 48.9 laxar síðustu 10 ár)
 * Gljúfurá á mörkunum (44.4 laxar). Hugsanlega áhrif breyttrar nýtingar og lélegra endurheimta úr sjó
+
+```{r}
+ahaetta |>
+  filter(expMedal10< 50 & expMedal10 > 40, ath!="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 50 & ahaetta$expMedal10 > 40 & ahaetta$ath!="ny"]) |>
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
+
+## Voru í mati 10 ára meðaltal undir 40, langtímameðaltal yfir 40
 * Ósá / Setbergsá veiðitölum ekki skilað. Bara síðustu ár úr Stóru Langadalsá en ekki Setbergsá
 * Selá er á mörkunum að fóstra lax. Aðallega bleikja. 
 * Selfljót. Silungsveiði?
@@ -32,14 +57,14 @@ source("veidi.R")
 
 ```{r}
 ahaetta |>
-  filter(expMedal10< 50 & ath!="ny") |>
+  filter(expMedal10< 40 & expMedal > 40, ath!="ny") |>
   kableExtra::kbl(digits = 2) |>
   kableExtra::kable_styling("striped", full_width = F) 
 ```
 
 ```{r out.width="100%"}
 stofnmat |>
-  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 50 & ahaetta$ath!="ny"]) |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 40 & ahaetta$expMedal > 40 & ahaetta$ath!="ny"]) |>
   mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
   #filter(expMedal10<100) |>
   pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
@@ -48,27 +73,26 @@ stofnmat |>
   geom_bar(stat = "identity")+
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
-  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-## Voru ekki í mati
-
+## Voru ekki í mati 10 ára meðaltal undir 40, langtímameðaltal yfir 40
 * Fögruhlíðará. Voru seiðasleppingar en er aðallega sjóbleikja
 * Hoffellsá / Laxá í Nesjum. Voru seiðasleppingar eftir aldamót. Þekki ekki núverandi nýtingu
 * Selá í Álftafirði. Voru seiðasleppingar held ég. Var síðan friðuð og svo aðeins veitt hluta vikunnar. Ólíklegt að veiðihlutfallið sé það sama og í Selá í Vopnafirði.
 
 ```{r}
 ahaetta |>
-  filter(expMedal10< 50 & ath=="ny") |>
+  filter(expMedal10< 40 & expMedal > 40 & ath=="ny") |>
   kableExtra::kbl(digits = 2) |>
   kableExtra::kable_styling("striped", full_width = F) 
 ```
 
 ```{r out.width="100%"}
 stofnmat |>
-  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 50 & ahaetta$ath=="ny"]) |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 40 & ahaetta$expMedal > 40 & ahaetta$ath=="ny"]) |>
   mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
   #filter(expMedal10<100) |>
   pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
@@ -77,7 +101,34 @@ stofnmat |>
   geom_bar(stat = "identity")+
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
-  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
+
+## Voru ekki í mati, Ekki til gögn síðustu 10 ár. Langtímameðaltal yfir 40
+* Aðallega hafbeitarævintýri
+* Móra, Tjarnará og Kiðafellsá líklega með laxastofn
+
+```{r}
+ahaetta |>
+  filter(is.na(expMedal10) & expMedal > 40 & ath=="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[is.na(ahaetta$expMedal10) & ahaetta$expMedal > 40 & ahaetta$ath=="ny"]) |> 
+  #mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
@@ -107,24 +158,24 @@ stofnmat |>
   geom_bar(stat = "identity")+
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
-  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
 # Ár sem detta út. 10 ára og langtímameðaltal undir 40
-* Geirlandsá og Tungufljót koma undir Kúðafljót
+* Bleikjuár
 
 ```{r}
 ahaetta |>
-  filter(is.na(expMedal10)) |>
+  filter(expMedal10< 40 & expMedal < 40 & ath!="ny") |>
   kableExtra::kbl(digits = 2) |>
   kableExtra::kable_styling("striped", full_width = F) 
 ```
 
 ```{r out.width="100%"}
 stofnmat |>
-  filter(adal_nr %in% ahaetta$adal_nr[is.na(ahaetta$expMedal10)]) |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10< 40 & ahaetta$expMedal < 40 & ahaetta$ath!="ny"]) |>
   mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
   #filter(expMedal10<100) |>
   pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
@@ -133,37 +184,26 @@ stofnmat |>
   geom_bar(stat = "identity")+
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
-  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free") +
-  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-# Ár sem eru ekki með skráningu síðust 10 ár
-```{r out.width="150%"}
-stofnmat |>
-  group_by(adal_nr) |>
-  mutate(ut = max(ar)) |>
-  filter(ut <= 2013) |>
-  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
-  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
-  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
-  geom_bar(stat = "identity")+
-  geom_path(aes(y=expMedal10), col="black") +
-  geom_path(aes(y=expMedal), col="black", linetype = 2) +
-  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
-  theme(axis.text.x=element_text(angle=45, hjust=1))+
-  theme(legend.position = "none")
-```
 
 # Ár með skráningu síðustu 10 ár en undir 40 fiskar í 10 ára og langtímameðaltali
-```{r out.width="150%"}
+* Þarf að athuga villur í gagnagrunninum
+```{r}
+ahaetta |>
+  filter(expMedal10<40 & expMedal < 40 & ath=="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
 stofnmat |>
-  group_by(adal_nr) |>
-  mutate(ut = max(ar)) |>
-  filter(ut > 2013) |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10<40 & ahaetta$expMedal < 40 & ahaetta$ath=="ny"]) |> 
   mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
-  filter(expMedal<40) |>
-  filter(!(adal_nr %in% ahaetta$adal_nr)) |>
+  #filter(expMedal10<100) |>
   pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
   #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
   ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
@@ -171,7 +211,55 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
-  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
+# Ár sem eru ekki með skráningu síðust 10 ár og meðaltal undir 40
+```{r}
+ahaetta |>
+  filter(is.na(expMedal10) & expMedal < 40 & ath=="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[is.na(ahaetta$expMedal10) & ahaetta$expMedal < 40 & ahaetta$ath=="ny"]) |> 
+  #mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
+
+
+# Ár með skráningu síðustu 10 ár en undir 40 fiskar í 10 ára og langtímameðaltali
+```{r}
+ahaetta |>
+  filter(expMedal10>50 & ath!="ny") |>
+  kableExtra::kbl(digits = 2) |>
+  kableExtra::kable_styling("striped", full_width = F) 
+```
+
+```{r out.width="100%"}
+stofnmat |>
+  filter(adal_nr %in% ahaetta$adal_nr[ahaetta$expMedal10>50 & ahaetta$ath!="ny"]) |> 
+  mutate(expMedal10 = ifelse(ar<2014,NA,expMedal10)) |>
+  #filter(expMedal10<100) |>
+  pivot_longer(starts_with("stofn_tmp"),names_to = "sleppt_kodi", values_to = "stofn_tmp", names_prefix = "stofn_tmp_") |> 
+  #filter(!(adal_nr %in% c("Bjarnafjarðará"=152))) |>
+  ggplot(aes(ar,stofn_tmp, fill=factor(sleppt_kodi))) +
+  geom_bar(stat = "identity")+
+  geom_path(aes(y=expMedal10), col="black") +
+  geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position = "none")
+```
