@@ -240,7 +240,7 @@ stofnmat |>
 ```
 
 
-# Ár með skráningu síðustu 10 ár en undir 40 fiskar í 10 ára og langtímameðaltali
+# Ár með skráningu síðustu 10 ár og meðaltal yfir 50 og voru í mati
 ```{r}
 ahaetta |>
   filter(expMedal10>50 & ath!="ny") |>

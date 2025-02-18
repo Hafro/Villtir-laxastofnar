@@ -6,7 +6,7 @@ default_theme <- theme_set(theme_bw())
 svaedi <- tibble(vatnsfall=c("Elliðaár", "LangáSveðja", "Krossá", "Búðardalsá", 
                              "NorðuráGlanni", "Blanda", "Vesturdalsá", "Selá", "Laugardalsá"),
                  svaedi = c("SW","SW","SW","SW","SW","NW","NE","NE","NW"))
-landsvaedi <- tibble(landsvaedi_id=c(1:8,NA), svaedi=c("SW","SW","NW","NW","NE","NE","SW","SW","SW"))
+landsvaedi <- tibble(landsvaedi_id=c(1:8,NA), svaedi=c("SW","SW","NW","NW","NE","NE","SW","RA","RA"))
 
 gogn <- read_delim("teljaragogn.csv") |>
   left_join(svaedi)
@@ -17,11 +17,12 @@ gogn |>
   mutate(veidi = sleppt_tvi + afli) |>
   mutate(ln=log(fjoldi), lv=log(veidi)) |>
   mutate(p=veidi/fjoldi) |>
-  filter(between(ar,2014,2023),vatnsfall!="Vesturdalsá") |> 
+  filter(between(ar,2014,2023),!(vatnsfall%in%c("Vesturdalsá","LangáSveðja","NorðuráGlanni"))) |> 
   group_by(ar,svaedi) |>
   summarise(mp = mean(p,na.rm = T), n=n()) |> 
   mutate(mp = ifelse(is.na(mp) | (svaedi=="NE" & ar<2021), 0.5, mp)) |> 
-  bind_rows(tibble(svaedi="NE",ar=2023, mp=0.5)) |>
+  bind_rows(tibble(svaedi="NE",ar=2023, mp=0.5)) |> 
+  bind_rows(tibble(svaedi="RA",ar=2014:2023, mp=0.5)) |> 
   left_join(landsvaedi) |> 
   write_excel_csv("veidihlutfall.csv")
 
@@ -36,7 +37,7 @@ gogn |>
     mutate(ln=log(fjoldi), lv=log(veidi)) |>
     mutate(p=veidi/fjoldi) |>
     #na.omit() |>
-  filter(between(ar,2014,2023),vatnsfall!="Vesturdalsá") |> 
+  filter(between(ar,2014,2023),!(vatnsfall%in%c("Vesturdalsá","LangáSveðja","NorðuráGlanni"))) |> 
   ggplot(aes(ar,p, colour = vatnsfall)) +
   stat_summary(fun="mean",aes(ar,p,group = svaedi),inherit.aes = FALSE, geom = "line", linetype=2) +
   stat_summary(fun="mean",aes(ar,p,group = svaedi),inherit.aes = FALSE, geom = "point",shape=4) +
