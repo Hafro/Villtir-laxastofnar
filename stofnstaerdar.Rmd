@@ -1,5 +1,5 @@
 ---
-title: "Stofnstærðir. Dreifing og minni"
+title: "Population size variation"
 author: "Jóhannes Guðbrandsson"
 date: "`r Sys.Date()`"
 output: 
@@ -17,14 +17,14 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE, out.width = "100%", warning = FALSE, message = FALSE)
 ```
 
-# Markmið / Spurningar
+# Goal / questions
 
-1. Hvaða dreifing lýsir stofnstærðarsveiflum hjá laxi best?
-2. Hvernig er best að meta stika fyrir þá dreifingu? Er t.d. sama dreifni óháð ám?
-3. Er þetta minnislaus prósess eða þarf að taka tillit til seinustu ára við spár á stofnstærð?
+1.  What probability distribution should we use?
+2.  How should we estimate parameters? Is the variation different between rivers?
+3.  Do we need to take temporal correlation into account?
 
-# Fisktalning
-## Gögn
+# Counters
+## Data
 ```{r}
 library(tidyverse)
 library(modelr)
@@ -82,7 +82,7 @@ gogn |>
   geom_smooth(method = "lm")
 ```
 
-# Fisktalning - Dreifing
+# Fish counters - distribution
 ```{r}
 mNorm <- lm(fjoldi~vatnsfall, data=gogn) #Meðaltöl í fjölda
 mLNorm <- lm(ln~vatnsfall, data=gogn) #Meðaltöl á log
@@ -93,7 +93,7 @@ gogn |>
   spread_residuals(mNorm,mLNorm, mLag, mLag2) ->
   gogn
 ```
-## Normaldreifing
+## Normal distribution
 ```{r}
 plot(mNorm)
 ```
@@ -117,7 +117,7 @@ anova(mLNorm, mLag)
 anova(mLag, mLag2)
 ```
 
-## Autocorrelation án lags
+## Partial autocorrelation of residuals from ANOVA
 ```{r}
 for (v in unique(gogn$vatnsfall)){
   #acf(gogn$mLNorm[gogn$vatnsfall==v], main=v)
@@ -125,7 +125,7 @@ for (v in unique(gogn$vatnsfall)){
 }
 ```
 
-## Autocorrelation með laggi
+## Partial autocorrelation of residuals from ANCOVA (5-year running mean)
 ```{r}
 for (v in unique(gogn$vatnsfall)){
   #acf(na.omit(gogn$mLag[gogn$vatnsfall==v]), main=v)
@@ -133,14 +133,14 @@ for (v in unique(gogn$vatnsfall)){
 }
 ```
 
-## Staðalfrávik
+## Standard deviation
 ```{r}
 summary(mLNorm)$sigma
 summary(mLag)$sigma
 ```
 
-# Veiðigögn
-## Gögn
+# Salmon catches
+## Data
 ```{r}
 listi <- c("Andakílsá"=12,"Blanda"=158,"Elliðaár"=411,"Norðurá"=1861, "Krossá"=1462,
            "Langá"=1568,"Miðfjarðará"=1733, "Hítará"=956,"Sog"=2271,"Stóra-Laxá"=2339,
@@ -225,8 +225,8 @@ test |>
   geom_smooth(col="black", se=FALSE)
 ```
 
-# Veiðigögn - dreifing
-Sleppum því að tjekka á normaldreifingu.
+# Catch data distribution
+Skip checking the normal distribution (it's obviously does not fit)
 
 ## log-normal
 ```{r}
@@ -258,22 +258,22 @@ shapiro.test(test$mLm5m10)
 
 Feitir halar, veiðihlutfall og léleg skráning?
 
-# Veiðigögn lagg
+# Catch data lag 5 year, 10 year
 ```{r}
 drop1(mLm5m10, test="F")
 drop1(mLm5NAspec, test = "F")
 ```
 
-5 ára meðaltal með mest áhrif
+5 year mean with highest F-value
 
-## Staðalfrávik
+## Standard deviation
 ```{r}
 summary(mLm5m10)$sigma
 summary(mLm5)$sigma
 summary(mL)$sigma
 ```
 
-## Autocorrelation 5 ára lag
+## Partial autocorrelation 5 year lag
 ```{r}
 for (v in unique(test$vatnsfall)){
   #acf(na.omit(test$m2[test$vatnsfall==v]), main=v)
@@ -281,7 +281,11 @@ for (v in unique(test$vatnsfall)){
 }
 ```
 
-# Niðurstaða
-1. Log-normal dreifing virðist lýsa stofnsveiflum ágætlega. Hugsanlega ætti talningadreifing eins og Poisson dreifing eða skyldar dreifingar betur við minnstu stofnanna.
-2. Best að reikna meðaltal á log-skala og staðalfrávik virðist svipað milli áa. Miðað við veiðigögn er hugsanlega hærra staðalfráviki í minni ánum en ekki er hægt að útiloka að "mæliskekkja" spili þar stórt hlutverk. Það er ótryggari skráning og / eða annað mynstur í veiðihlutfalli eftir stærð áa.
-3. Meðaltal síðustu fimm ára virðist gefa ágætisspá. Frekar en 10 ára eða heildarmeðaltal. Það er autocorrelation í ám þar sem mikið er af stórlaxi (meikar sens) og einhverja hluta vegna í Elliðaánum. 
+# Results
+1.  What probability distribution should we use?
+    - log-Normal distribution seems to adequate. Might be worth it to take a closer look at smaller stocks
+2.  How should we estimate parameters? Is the variation different between rivers?
+    - We should work on log-scale, geometric mean instead of arithmetic. The standard deviation seems to similar among river (0.5). More variation for small stocks biological or a "measurement error"?
+3.  Do we need to take temporal correlation into account?
+    - Strong correlation with 5 year mean and 10 year mean also significant. One year auto-correlation in some rivers (2SW rivers)
+    - 10 year mean used in the previous edition of the risk assessment
