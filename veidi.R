@@ -23,6 +23,7 @@ veidibok_veidibok(mar) |>
   left_join({fv_vatn(mar) |>
       select(vatn_nr, adalvatnsfall_nr)}, by=c("water_no"="vatn_nr")) |>
   mutate(adal_nr = case_match(water_no, 530~1189, 819~1189, 1969~1189, 716~716, 2645~2645,
+                              676~2645,
                               1599~1599, 1385~1189, 1629~1189, 2870~1189, 749~1189, 2553~1189,
                               12~1189, 709~1189, 1861~1189, 2591~1568, 2670~2670,
                               .default=adalvatnsfall_nr)) |>
@@ -72,6 +73,7 @@ tbl(mar, sql("select id as fishing_area_id,
   left_join({fv_vatn(mar) |>
       select(vatn_nr, adalvatnsfall_nr)}, by=c("water_no"="vatn_nr")) |>
   mutate(adal_nr = case_match(water_no, 530~1189, 819~1189, 1969~1189, 716~716, 2645~2645,
+                              676~2645,
                               1599~1599, 1385~1189, 1629~1189, 2870~1189, 749~1189, 2553~1189,
                               12~1189, 709~1189, 1861~1189, 2591~1568, 2670~2670, 3093~1599,
                               .default=adalvatnsfall_nr)) |>

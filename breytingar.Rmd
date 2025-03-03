@@ -1,5 +1,5 @@
 ---
-title: "Breytingar - vafaatriði"
+title: "Which rivers to include?"
 author: "Jóhannes Guðbrandsson"
 date: "`r Sys.Date()`"
 output: 
@@ -19,12 +19,14 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 ```{r}
 source("veidi.R")
+library(leaflet)
 ```
+# Disclamers
+* We don't distinguish between 0 salmon catch and no report. This will inflate the mean for rivers with sporadic salmon catches. 
+* We are not using information on river closed to fishing (protected rivers)
 
-# Ár á mörkunum, 
-## Voru í mati yfir 40 í 10ára meðaltali en undir 50 10 ára meðaltal
-* Eldavatn er aðallega sjóbirtingsá en er á mörkunum í fjölda (stofnmat 48.9 laxar síðustu 10 ár)
-* Gljúfurá á mörkunum (44.4 laxar). Hugsanlega áhrif breyttrar nýtingar og lélegra endurheimta úr sjó
+# Rivers close to 40-50 cutoff
+## In 2020 assessment. 10 year mean higher than 40 and lower than 50
 
 ```{r}
 ahaetta |>
@@ -45,15 +47,29 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-## Voru í mati 10 ára meðaltal undir 40, langtímameðaltal yfir 40
-* Ósá / Setbergsá veiðitölum ekki skilað. Bara síðustu ár úr Stóru Langadalsá en ekki Setbergsá
-* Selá er á mörkunum að fóstra lax. Aðallega bleikja. 
-* Selfljót. Silungsveiði?
-* Vatnsholtsá / Vatnasvæði Lýsu. Aðallega silungur. Breytt veiðinýting líka held ég
+```{r out.width="100%"}
+ahaetta |>
+  filter(expMedal10< 50 & expMedal10 > 40, ath!="ny") |>
+  mutate(merki = paste(adal_nr, nafn)) |>
+  leaflet() |>
+  addTiles() |>
+  addLabelOnlyMarkers(lng = ~V, lat = ~N, label = ~merki,
+                      labelOptions = labelOptions(noHide = T, textsize = "12px"),
+                      clusterOptions = markerClusterOptions())
+
+```
+
+## In 2020 assessment. 10 year mean lower than 40, longterm mean higher than 40
+* Ósá / Setbergsá catch reports not returned in latest years. Records for Stóru Langadalsá returned but not for Setbergsá
+* Selá temperature dependent? 
+* Selfljót / Gilsá. Temperature dependent?
+* Vatnsholtsá / Vatnasvæði Lýsu. Mostly trout / charr fishing. Catch and release in latest years
 
 ```{r}
 ahaetta |>
@@ -74,14 +90,27 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-## Voru ekki í mati 10 ára meðaltal undir 40, langtímameðaltal yfir 40
-* Fögruhlíðará. Voru seiðasleppingar en er aðallega sjóbleikja
-* Hoffellsá / Laxá í Nesjum. Voru seiðasleppingar eftir aldamót. Þekki ekki núverandi nýtingu
-* Selá í Álftafirði. Voru seiðasleppingar held ég. Var síðan friðuð og svo aðeins veitt hluta vikunnar. Ólíklegt að veiðihlutfallið sé það sama og í Selá í Vopnafirði.
+```{r out.width="100%"}
+ahaetta |>
+  filter(expMedal10< 40 & expMedal > 40, ath!="ny") |>
+  mutate(merki = paste(adal_nr, nafn)) |>
+  leaflet() |>
+  addTiles() |>
+  addLabelOnlyMarkers(lng = ~V, lat = ~N, label = ~merki,
+                      labelOptions = labelOptions(noHide = T, textsize = "12px"),
+                      clusterOptions = markerClusterOptions())
+
+```
+
+## Not in 2020 assessment. 10 year mean lower than 40, longterm mean higher than 40
+* Effect of smolt releases
+* Most likely a wild stock in Selá
 
 ```{r}
 ahaetta |>
@@ -101,14 +130,28 @@ stofnmat |>
   geom_bar(stat = "identity")+
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
+  xlab("") +
+  ylab("Estimated stock size") +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-## Voru ekki í mati, Ekki til gögn síðustu 10 ár. Langtímameðaltal yfir 40
-* Aðallega hafbeitarævintýri
-* Móra, Tjarnará og Kiðafellsá líklega með laxastofn
+```{r out.width="100%"}
+ahaetta |>
+  filter(expMedal10< 40 & expMedal > 40 & ath=="ny") |>
+  mutate(merki = paste(adal_nr, nafn)) |>
+  leaflet() |>
+  addTiles() |>
+  addLabelOnlyMarkers(lng = ~V, lat = ~N, label = ~merki,
+                      labelOptions = labelOptions(noHide = T, textsize = "12px"),
+                      clusterOptions = markerClusterOptions())
+
+```
+
+## Not in 2020 assessment. 10 year mean not available, longterm mean higher than 40
+* Most of these smolt releases / adult salmon transport
+* Móra, Tjarnará, Kiðafellsá, Hoffelssá (Laxá í Nesjum) with wild stock? Stock size?
 
 ```{r}
 ahaetta |>
@@ -129,16 +172,24 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-# Nýjar ár yfir 50 í 10ára meðaltali
+* Need coordinates
 
-* Seiðasleppingar / hafbeit
-  * Affal, Skógá, Lagarfljót, (Jökla)
-* "Nýjir stofnar" óvíst hvað fiskrækt hefur mikið að segja
-  * Svínafossá, (Jökla)
+#  Not in 2020 assessment. 10 year over 50
+
+* Smolt releases / ranching. Shoud be in the model, but will not affect production if they go over 4% intrusion
+  * Affal, Skógá, Lagarfljót, (Jökla?)
+* New stocks. Fish ladders and hydropower
+  * Svínafossá, (Jökla?)
+* Kúðafljót as Tungufljót in 2020 assessment
+* Skaftá as Geirlandsá in 2020 assessment
+* Don't know why the rest were not in the 2020 assessment
+  * Staðará Súgandafirði only 7 years of records, Lagarfljót 9 years
   
 ```{r}
 ahaetta |>
@@ -159,12 +210,25 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-# Ár sem detta út. 10 ára og langtímameðaltal undir 40
-* Bleikjuár
+```{r out.width="100%"}
+ahaetta |>
+  filter(expMedal10 >= 50, ath=="ny") |>
+  mutate(merki = paste(adal_nr, nafn)) |>
+  leaflet() |>
+  addTiles() |>
+  addLabelOnlyMarkers(lng = ~V, lat = ~N, label = ~merki,
+                      labelOptions = labelOptions(noHide = T, textsize = "12px"),
+                      clusterOptions = markerClusterOptions())
+
+```
+
+# In 2020 assessment. 10 year mean lower than 40, longterm mean lower than 40
 
 ```{r}
 ahaetta |>
@@ -185,13 +249,28 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
 
-# Ár með skráningu síðustu 10 ár en undir 40 fiskar í 10 ára og langtímameðaltali
-* Þarf að athuga villur í gagnagrunninum
+```{r out.width="100%"}
+ahaetta |>
+  filter(expMedal10< 40 & expMedal < 40 & ath!="ny") |>
+  mutate(merki = paste(adal_nr, nafn)) |>
+  leaflet() |>
+  addTiles() |>
+  addLabelOnlyMarkers(lng = ~V, lat = ~N, label = ~merki,
+                      labelOptions = labelOptions(noHide = T, textsize = "12px"),
+                      clusterOptions = markerClusterOptions())
+
+```
+
+# Not in 2020 assessment. 10 year mean lower than 40, longterm mean lower than 40
+* Some database errors in the 80's need to be checked
+
 ```{r}
 ahaetta |>
   filter(expMedal10<40 & expMedal < 40 & ath=="ny") |>
@@ -211,11 +290,13 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
-# Ár sem eru ekki með skráningu síðust 10 ár og meðaltal undir 40
+# Not in 2020 assessment. 10 year mean not available, longterm mean lower than 40
 ```{r}
 ahaetta |>
   filter(is.na(expMedal10) & expMedal < 40 & ath=="ny") |>
@@ -235,12 +316,14 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
 ```
 
 
-# Ár með skráningu síðustu 10 ár og meðaltal yfir 50 og voru í mati
+# In 2020 assessment. 10 year mean over 50
 ```{r}
 ahaetta |>
   filter(expMedal10>50 & ath!="ny") |>
@@ -260,6 +343,21 @@ stofnmat |>
   geom_path(aes(y=expMedal10), col="black") +
   geom_path(aes(y=expMedal), col="black", linetype = 2) +
   facet_wrap(~paste(adal_nr,adalvatnsfall), scales = "free_y") +
+  xlab("") +
+  ylab("Estimated stock size") +
   theme(axis.text.x=element_text(angle=45, hjust=1)) +
   theme(legend.position = "none")
+```
+
+
+```{r out.width="100%"}
+ahaetta |>
+  filter(expMedal10>50 & ath!="ny") |>
+  mutate(merki = paste(adal_nr, nafn)) |>
+  leaflet() |>
+  addTiles() |>
+  addLabelOnlyMarkers(lng = ~V, lat = ~N, label = ~merki,
+                      labelOptions = labelOptions(noHide = T, textsize = "12px"),
+                      clusterOptions = markerClusterOptions())
+
 ```
