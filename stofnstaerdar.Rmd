@@ -110,6 +110,14 @@ plot(mLNorm)
 shapiro.test(gogn$mLNorm)
 ```
 
+## 5-year lag
+```{r}
+plot(mLag)
+```
+```{r}
+shapiro.test(gogn$mLag)
+```
+
 # Fisktalning - Minni
 ```{r}
 mLNorm <- lm(ln~vatnsfall, data=filter(gogn,!is.na(m5)))
