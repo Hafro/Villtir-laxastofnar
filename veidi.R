@@ -129,6 +129,9 @@ tbl(mar, sql("select id as fishing_area_id,
   mutate(M=max(stofn), hraMedal=mean(stofn), logMedal=mean(logN), expMedal=exp(logMedal), N_ar=n()) -> #filter(ar>2013) |> filter(!(expMedal10>40 | expMedal>40)) |> View()
   stofnmat
 
+stofnmat |>
+  write_excel_csv(file="stofnar.csv")
+
 stofnmat |> #149 vatnsföll
   #filter(ar>2013) |> #126 vatnsföll. Þarf að vera skráð veiði minnst einu sinni frá 2014
   #filter(expMedal10>40 | expMedal>40) |> #91 vatnsföll. 10ára meðaltal eða langtímameðaltal yfir 40
