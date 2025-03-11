@@ -22,7 +22,7 @@ gogn |>
   summarise(mp = mean(p,na.rm = T), n=n()) |> 
   mutate(mp = ifelse(is.na(mp) | (svaedi=="NE" & ar<2021), 0.5, mp)) |> 
   bind_rows(tibble(svaedi="NE",ar=2023, mp=0.5)) |> 
-  bind_rows(tibble(svaedi="RA",ar=2014:2023, mp=0.5)) |> 
+  bind_rows(tibble(svaedi="RA",ar=2014:2023, mp=0.7)) |> 
   left_join(landsvaedi) |> 
   write_excel_csv("veidihlutfall.csv")
 
